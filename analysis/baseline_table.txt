@@ -1,0 +1,4 @@
+What each guess scores on the test set (pixel accuracy over labelled pixels)
+  Guess 'everything is Marine Water' : 38.6%
+  Random Forest (earlier run)         : see report.json
+  This ensemble (5 U-Nets)           : 82.4%   mIoU 0.616

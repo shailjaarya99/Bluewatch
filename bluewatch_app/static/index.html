@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BlueWatch</title>
+<meta name="description" content="Find oil on the sea from Sentinel-2 satellite scenes.">
+<link rel="icon" href="/logo">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<canvas id="sea" aria-hidden="true"></canvas>
+
+<header class="nav">
+  <a class="brand" href="/" aria-label="BlueWatch">
+    <img src="/logo" alt="" width="34" height="34">
+    <span>BlueWatch</span>
+  </a>
+  <p class="status" id="status">Starting...</p>
+</header>
+
+<main class="app">
+  <section class="intro">
+    <h1>Oil spill finder for Sentinel-2 scenes</h1>
+    <p>Pick a scene. The model colours every pixel (oil, water, algae, ship, foam) and shows you how far to trust the answer, including where it is wrong.</p>
+  </section>
+
+  <!-- ============ the working area ============ -->
+  <section class="scan-grid" id="scan">
+    <aside class="panel pick" aria-label="Choose a scene">
+      <p class="step-no">1. Choose a scene</p>
+
+      <div class="modelpick" id="modelPick" hidden>
+        <p class="mini">Model</p>
+        <div class="seg small" role="group" aria-label="Which model reads the scene" id="modelBtns">
+          <button data-model="unet" aria-pressed="true">U-Net</button>
+          <button data-model="rf" aria-pressed="false">Random Forest</button>
+        </div>
+        <p class="note" id="modelNote"></p>
+      </div>
+      <p class="note" id="unetHint" hidden>A trained U-Net was found, but PyTorch is not installed in this Python. Start the app with <code>py -3.12 bluewatch_app/app.py</code> to use it.</p>
+
+      <div class="seg" role="tablist" aria-label="Where the scene comes from">
+        <button role="tab" id="tabSample" aria-selected="true" aria-controls="paneSample">Test scenes</button>
+        <button role="tab" id="tabUpload" aria-selected="false" aria-controls="paneUpload">Upload your own</button>
+      </div>
+
+      <div id="paneSample" role="tabpanel" aria-labelledby="tabSample">
+        <p class="note">Crops from the MADOS test set. The model never saw them in training, and each has expert labels to compare against.</p>
+        <div class="chips" role="group" aria-label="Filter samples">
+          <button class="chip on" data-kind="oil" aria-pressed="true">Has real oil</button>
+          <button class="chip" data-kind="clean" aria-pressed="false">No oil (false alarm check)</button>
+        </div>
+        <div id="sampleList" class="samples" aria-live="polite"></div>
+      </div>
+
+      <div id="paneUpload" role="tabpanel" aria-labelledby="tabUpload" hidden>
+        <label class="drop" id="drop">
+          <input class="sr" type="file" id="fileScene" accept=".tif,.tiff" multiple>
+          <span class="drop-title">Choose scene files</span>
+          <span class="drop-sub">Select the 11-band file (<code>Scene_156_L2R_rhorc_8.tif</code>) and, to see the score, its label file (<code>Scene_156_L2R_cl_8.tif</code>) together. Hold Ctrl to pick both. Ready-made pairs are in your <code>demo_files</code> folder.</span>
+        </label>
+      </div>
+
+      <p class="msg" id="scanMsg" role="status"></p>
+    </aside>
+
+    <div class="panel viewer" id="viewer">
+      <p class="step-no">2. Read the result</p>
+      <div class="empty" id="empty">
+        <p class="empty-title">Nothing scanned yet</p>
+        <p>Choose a scene on the left. The map, the oil alert and the score show up here.</p>
+      </div>
+
+      <div class="result" id="result" hidden>
+        <div class="vbar">
+          <div>
+            <h3 id="sceneName">Scene</h3>
+            <p class="sub" id="sceneSub"></p>
+          </div>
+          <div class="seg small" role="group" aria-label="What to show on the map" id="viewBtns">
+            <button data-view="sat" aria-pressed="false">Satellite</button>
+            <button data-view="pred" aria-pressed="false">Prediction</button>
+            <button data-view="overlay" aria-pressed="true">Overlay</button>
+            <button data-view="truth" aria-pressed="false" hidden>Real labels</button>
+          </div>
+        </div>
+
+        <div class="mapwrap"><canvas id="map" role="img" aria-label="Map of what the model found in this scene"></canvas></div>
+
+        <div class="slider">
+          <label for="thr">Call a pixel oil when the model is at least <b id="thrVal">30%</b> sure</label>
+          <input type="range" id="thr" min="10" max="95" value="30" step="1">
+          <div class="ends"><span>Catches more oil, more false alarms</span><span>Fewer flags, may miss oil</span></div>
+          <p class="note" id="thrNote"></p>
+        </div>
+
+        <div class="summary">
+          <div class="alert" id="alert" data-level="calm" aria-live="polite">
+            <p class="alert-title" id="alertTitle"></p>
+            <p id="alertText"></p>
+          </div>
+          <div class="scores" id="scores" hidden></div>
+        </div>
+
+        <div id="wrongBox" class="wrong" hidden>
+          <h4 class="legend-title">Where it went wrong in this scene</h4>
+          <p id="wrongText"></p>
+        </div>
+
+        <div>
+          <h4 class="legend-title">What the model found</h4>
+          <p class="note" id="legendHint">Click a row to highlight that class on the map. Click it again to switch the highlight off.</p>
+          <div class="legend" id="legend"></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn ghost" id="dlPng">Download map (PNG)</button>
+          <button class="btn ghost" id="dlCsv">Download counts (CSV)</button>
+        </div>
+      </div>
+
+      <div class="busy" id="busy" hidden><span class="spinner" aria-hidden="true"></span><span id="busyText">Reading 11 bands and classifying pixels...</span></div>
+    </div>
+  </section>
+
+  <!-- ============ how good is it (tabs, nothing scrolls away) ============ -->
+  <section class="panel quality" id="trust">
+    <div class="qhead">
+      <div>
+        <h2>How good is it?</h2>
+        <p class="sub">Measured on <span id="tPixels">361,147</span> labelled pixels from scenes the models never trained on.</p>
+      </div>
+      <div class="seg small" role="tablist" id="qTabs" aria-label="Evidence">
+        <button role="tab" data-q="scores" aria-selected="true">Scores</button>
+        <button role="tab" data-q="oil" aria-selected="false">Oil mistakes</button>
+        <button role="tab" data-q="fails" aria-selected="false">Failures</button>
+        <button role="tab" data-q="how" aria-selected="false">How it works</button>
+      </div>
+    </div>
+
+    <div class="qpane" id="q-scores">
+      <div class="proscons">
+        <div class="pc-box good"><h3>Works well</h3><ul id="prosList"></ul></div>
+        <div class="pc-box bad"><h3>Struggles</h3><ul id="consList"></ul></div>
+      </div>
+      <div class="trust-grid">
+        <div>
+          <h3>Oil, on unseen scenes</h3>
+          <table class="cmp" id="oilTable"></table>
+          <h3 class="mt">Did the physics formulas help? (Random Forest)</h3>
+          <table class="cmp" id="cmp"></table>
+        </div>
+        <div>
+          <h3>Score for each class (single U-Net)</h3>
+          <p class="note">Overlap score (IoU): 1.00 is perfect, 0 is a miss. Bright bar = U-Net, thin bar = Random Forest.</p>
+          <div class="legend static" id="perClass"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qpane" id="q-oil" hidden>
+      <div id="oilMistakes"></div>
+    </div>
+
+    <div class="qpane" id="q-fails" hidden>
+      <div id="failList"></div>
+    </div>
+
+    <div class="qpane" id="q-how" hidden>
+      <ol class="steps">
+        <li><h3>Read the bands</h3><p>A scene holds 11 bands of light, including infrared our eyes cannot see. Oil, water and algae reflect these bands differently.</p></li>
+        <li><h3>Add five formulas</h3><p>For the Random Forest, NDWI, MNDWI, NDVI, an NIR/SWIR ratio and FAI make water, algae and floating material easier to tell apart. The U-Net reads the bands directly.</p></li>
+        <li><h3>Decide for every pixel</h3><p>The Random Forest asks 100 decision trees about each pixel. The U-Net also looks at the pixels around it. Several U-Nets are averaged for the final answer.</p></li>
+        <li><h3>Colour the map</h3><p>Each pixel gets its class colour. The slider sets how sure the model must be before a pixel is called oil.</p></li>
+      </ol>
+      <p class="note">Not live video: Sentinel-2 passes over the same place about every 5 days. Speed here means seconds per scene.</p>
+    </div>
+  </section>
+
+  <!-- ============ optional pixel-table check ============ -->
+  <details class="panel csvbox" id="data">
+    <summary>Advanced: check a table of pixels (CSV)</summary>
+    <div class="data-grid">
+      <div>
+        <p class="note">A CSV with columns b1, b2, b3, b4, b5, b6, b7, b8, b8a, b11, b12 (and optionally <code>label</code> for a score). A pixel table has no neighbours, so this check always uses the Random Forest.</p>
+        <button class="btn primary wide" id="getSample" hidden>1. Download a sample CSV (2,000 pixels)</button>
+        <label class="drop" id="dropCsv">
+          <input class="sr" type="file" id="fileCsv" accept=".csv">
+          <span class="drop-title">2. Choose a CSV file</span>
+          <span class="drop-sub">The sample you just downloaded works, or any file with those columns.</span>
+        </label>
+        <p class="msg" id="csvMsg" role="status"></p>
+      </div>
+      <div id="csvOut">
+        <div class="empty" id="csvEmpty"><p class="empty-title">No file yet</p><p>The breakdown shows here.</p></div>
+        <div id="csvResult" hidden>
+          <h3 id="csvName"></h3>
+          <p class="sub" id="csvSub"></p>
+          <div id="csvScores" class="scores"></div>
+          <h4 class="legend-title">What the model found</h4>
+          <div class="legend static" id="csvLegend"></div>
+        </div>
+        <div class="busy" id="csvBusy" hidden><span class="spinner" aria-hidden="true"></span><span>Classifying pixels...</span></div>
+      </div>
+    </div>
+  </details>
+</main>
+
+<footer>
+  <p>BlueWatch, a marine oil spill detection project. Data: MADOS (Sentinel-2). Models: U-Net (ensemble) and Random Forest.</p>
+</footer>
+
+<script src="/static/jelly.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

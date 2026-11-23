@@ -1,0 +1,24 @@
+{
+  "test_miou": 0.566,
+  "oil_iou": 0.388,
+  "oil_recall": 0.616,
+  "oil_precision": 0.511,
+  "per_class": {
+    "Marine Debris": 0.48,
+    "Dense Sargassum": 0.79,
+    "Sparse Floating Algae": 0.67,
+    "Natural Organic Material": 0.44,
+    "Ship": 0.43,
+    "Oil Spill": 0.39,
+    "Marine Water": 0.69,
+    "Sediment-Laden Water": 0.99,
+    "Foam": 0.55,
+    "Turbid Water": 0.76,
+    "Shallow Water": 0.43,
+    "Waves & Wakes": 0.36,
+    "Oil Platform": 0.65,
+    "Jellyfish": 0.34,
+    "Sea snot": 0.54
+  },
+  "epochs": 30
+}

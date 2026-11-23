@@ -1,0 +1,79 @@
+{
+ "about": "Numbers measured from your own runs on the test set (728 crops, 361,147 labelled pixels). Edit this file after you retrain and the page updates.",
+ "rf": {
+  "label": "Random Forest",
+  "note": "100 trees, 16 features (11 bands + 5 spectral indices), trained on 761,887 pixels",
+  "pixels": 361147,
+  "miou": 0.429,
+  "oil_iou": 0.307,
+  "oil_recall": 0.824,
+  "oil_precision": 0.329,
+  "per_class_iou": {
+   "1": 0.41,
+   "2": 0.82,
+   "3": 0.48,
+   "4": 0.06,
+   "5": 0.35,
+   "6": 0.31,
+   "7": 0.39,
+   "8": 0.99,
+   "9": 0.16,
+   "10": 0.61,
+   "11": 0.43,
+   "12": 0.12,
+   "13": 0.7,
+   "14": 0.16,
+   "15": 0.46
+  }
+ },
+ "unet": {
+  "label": "U-Net",
+  "note": "3 down-steps, 11 bands in, 30 epochs, best epoch picked on the validation set",
+  "pixels": 361147,
+  "miou": 0.573,
+  "oil_iou": 0.386,
+  "oil_recall": 0.612,
+  "oil_precision": 0.511,
+  "per_class_iou": {
+   "1": 0.45,
+   "2": 0.81,
+   "3": 0.68,
+   "4": 0.52,
+   "5": 0.34,
+   "6": 0.39,
+   "7": 0.69,
+   "8": 0.99,
+   "9": 0.51,
+   "10": 0.77,
+   "11": 0.42,
+   "12": 0.37,
+   "13": 0.61,
+   "14": 0.41,
+   "15": 0.62
+  },
+  "accuracy": 0.808,
+  "oil_vs_rest_accuracy": 0.861
+ },
+ "validation": {
+  "note": "Random Forest trained on a 200,000-pixel sample, scored on the validation set",
+  "miou": 0.544,
+  "oil_iou": 0.499,
+  "oil_dice": 0.666
+ },
+ "bands_only_validation": {
+  "miou": 0.477,
+  "oil_iou": 0.39,
+  "oil_dice": 0.561
+ },
+ "ensemble": {
+  "label": "U-Net ensemble",
+  "note": "5 U-Nets averaged (original, 3 x Dice-loss seeds, 1 wider model). Measured on the test set by analysis_report.py. Oil IoU is worked out from oil recall and precision.",
+  "pixels": 361147,
+  "miou": 0.616,
+  "accuracy": 0.824,
+  "oil_recall": 0.668,
+  "oil_precision": 0.542,
+  "oil_iou": 0.427
+ },
+ "baseline_all_water": 0.386
+}

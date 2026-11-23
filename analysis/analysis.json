@@ -1,0 +1,133 @@
+{
+ "models": [
+  "bluewatch_unet.pt",
+  "bluewatch_unet_v2_seed1.pt",
+  "bluewatch_unet_v2_seed2.pt",
+  "bluewatch_unet_v2_seed3.pt",
+  "bluewatch_unet_v3_seed1.pt"
+ ],
+ "labelled_pixels": 361147,
+ "pixel_accuracy": 0.8245,
+ "miou": 0.6157,
+ "lazy_all_water": 0.3862,
+ "oil_called": [
+  {
+   "class": "Oil Spill",
+   "pct": 66.8
+  },
+  {
+   "class": "Marine Water",
+   "pct": 24.7
+  },
+  {
+   "class": "Shallow Water",
+   "pct": 7.7
+  },
+  {
+   "class": "Waves & Wakes",
+   "pct": 0.7
+  },
+  {
+   "class": "Turbid Water",
+   "pct": 0.1
+  },
+  {
+   "class": "Sediment-Laden Water",
+   "pct": 0.0
+  }
+ ],
+ "called_oil_really": [
+  {
+   "class": "Oil Spill",
+   "pct": 54.2
+  },
+  {
+   "class": "Marine Water",
+   "pct": 43.5
+  },
+  {
+   "class": "Shallow Water",
+   "pct": 1.0
+  },
+  {
+   "class": "Waves & Wakes",
+   "pct": 0.7
+  },
+  {
+   "class": "Oil Platform",
+   "pct": 0.3
+  },
+  {
+   "class": "Sea snot",
+   "pct": 0.2
+  }
+ ],
+ "slider_points": {
+  "0.2": [
+   0.834,
+   0.55
+  ],
+  "0.3": [
+   0.759,
+   0.556
+  ],
+  "0.4": [
+   0.69,
+   0.548
+  ],
+  "0.5": [
+   0.626,
+   0.533
+  ],
+  "0.6": [
+   0.564,
+   0.514
+  ],
+  "0.7": [
+   0.51,
+   0.495
+  ],
+  "0.8": [
+   0.448,
+   0.478
+  ],
+  "0.9": [
+   0.229,
+   0.875
+  ]
+ },
+ "failures": [
+  {
+   "file": "analysis/failure_Scene_155_crop1.png",
+   "scene": "Scene_155",
+   "crop": "1",
+   "real_oil": 685,
+   "found": 0,
+   "false_flags": 0
+  },
+  {
+   "file": "analysis/failure_Scene_145_crop20.png",
+   "scene": "Scene_145",
+   "crop": "20",
+   "real_oil": 671,
+   "found": 0,
+   "false_flags": 0
+  },
+  {
+   "file": "analysis/failure_Scene_168_crop8.png",
+   "scene": "Scene_168",
+   "crop": "8",
+   "real_oil": 526,
+   "found": 0,
+   "false_flags": 0
+  },
+  {
+   "file": "analysis/failure_Scene_155_crop6.png",
+   "scene": "Scene_155",
+   "crop": "6",
+   "real_oil": 3845,
+   "found": 31,
+   "false_flags": 0
+  }
+ ]
+}

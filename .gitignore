@@ -1,0 +1,10 @@
+MADOS.zip
+MADOS/
+*.zip
+*.tif
+*.png
+__pycache__/
+*.pyc
+
+*.joblib
+train.csv
